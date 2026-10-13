@@ -1,0 +1,4 @@
+# Local build products. Do not submit these.
+comp2002-os-mergesort/*.o
+comp2002-os-mergesort/*.d
+comp2002-os-mergesort/test-mergesort

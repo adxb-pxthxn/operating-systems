@@ -4,7 +4,9 @@
 #include <sys/times.h> /* for times system call */
 #include <sys/time.h>  /* for gettimeofday system call */
 #include <unistd.h>
+#ifndef __APPLE__
 #include <error.h>     /* On MacOS you won't need this line */
+#endif
 #include "mergesort.h"
 
 /* the number of levels of threads, specified by the user */
