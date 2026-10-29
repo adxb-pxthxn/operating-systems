@@ -1,30 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/times.h> /* for times system call */
-#include <sys/time.h>  /* for gettimeofday system call */
+#include <sys/times.h> // for times sys call
+#include <sys/time.h>  // for gettimeofday sys call
 #include <unistd.h>
 #ifndef __APPLE__
-#include <error.h>     /* On MacOS you won't need this line */
+/* #include <error.h> for non unix */
 #endif
 #include "mergesort.h"
 
-/* the number of levels of threads, specified by the user */
+// number of thread levels
 int cutoff = 0;
 
-/* the array we want to sort */
+// the array to sort
 int *A;
 
-/* when merge, we need a temp array (named B) to temporarily store elements of the original array */
+// when merging a temp array (named B) is needed to temporarily store elements of the original array
 int *B;
 
-// function prototypes
+// function signatures
 int check_if_sorted(int A[], int n);
 void generate_random_array(int A[], int n, int seed);
 double getMilliSeconds(void);
 
 /*
----------------------------------------------------------------------------
 clock_t times(struct tms *buffer);
 times() fills the structure pointed to by buffer with
 time-accounting information.  The structure defined in
@@ -37,11 +36,10 @@ struct tms {
 The time is given in units of 1/CLK_TCK seconds where the
 value of CLK_TCK can be determined using the sysconf() function
 with the agrgument _SC_CLK_TCK.
----------------------------------------------------------------------------
 */
 
 
-/* we do not really use this function anymore, but somehow we still keep it here. */
+// we do not really use this function anymore, but somehow we still keep it here?
 float report_cpu_time(void)
 {
 	struct tms buffer;
@@ -52,7 +50,7 @@ float report_cpu_time(void)
 	return (cputime);
 }
 
-/* we do not really use this function anymore, but somehow we still keep it here. */
+// same sentiment as above
 float report_sys_time(void)
 {
 	struct tms buffer;
@@ -107,22 +105,22 @@ int check_if_sorted(int A[], int n)
 	return TRUE;
 }
 
-/* this function prints A, but we only print the first 100 elements */
+// this function prints A, but we only print the first 100 elements
 void printA(void){
 	int i;
 	printf("Array A:");
-	/* FIXME: we assume the size of A is at least 100, and this will fail if it is lower than 100 */
+	// FIXME: we assume the size of A is at least 100, and this will fail if it is lower than 100
 	for(i=0;i<100;i++){
 		printf(" %d",A[i]);
 	}
 	printf("\n");
 }
 
-/* this function prints B, but we only print the first 100 elements */
+// this function prints B, but we only print the first 100 elements
 void printB(void){
 	int i;
 	printf("Array B:");
-	/* FIXME: we assume the size of B is at least 100, and this will fail if it is lower than 100 */
+	// FIXME: we assume the size of B is at least 100, and this will fail if it is lower than 100
 	for(i=0;i<100;i++){
 		printf(" %d",B[i]);
 	}
@@ -155,7 +153,7 @@ int main(int argc, char **argv) {
 
 	// sort the input (and time it)
 	start_time = getMilliSeconds();
-	/* first index is 0, last index is n-1, we consider the main thread as level 0 */
+	// first index is 0, last index is n-1, we consider the main thread as level 0
 	struct argument *arg=buildArgs(0, n-1, 0);
 	parallel_mergesort(arg);
 	sorting_time = getMilliSeconds() - start_time;
@@ -173,7 +171,8 @@ int main(int argc, char **argv) {
 		free(A);
 		exit(EXIT_FAILURE);
 	}
-	/* Now we can free the memory for the two arrays, as well as free memory for arg. */
+
+	// Now we can free the memory for the two arrays, as well as free memory for arg.
 	free(arg);
 	free(B);
 	free(A);
