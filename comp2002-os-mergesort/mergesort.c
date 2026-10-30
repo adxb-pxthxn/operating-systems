@@ -8,6 +8,10 @@
 #include "mergesort.h"
 #include <pthread.h>
 
+/* Copy the current range from shared A to shared B.
+ * Each thread works on a non-overlapping range,
+ * so no mutex is required for these accesses.
+ */
 /* this function will be called by mergesort() and also by parallel_mergesort(). */
 void merge(int leftstart, int leftend, int rightstart, int rightend){
 	/* 1. copy range A to B */
@@ -65,7 +69,7 @@ void * parallel_mergesort(void *arg){
 		return NULL;
 	}
 
-	/* if the size is small enough, call my_mergesort */
+	/* Split the current range into two halves */
 	int mid = left + (right - left) / 2;
 
 	/* build arguments for the two threads */
@@ -74,12 +78,45 @@ void * parallel_mergesort(void *arg){
 
 	/* create two threads */
 	pthread_t tidL, tidR;
-	pthread_create(&tidL, NULL, parallel_mergesort, (void *) aL);
-	pthread_create(&tidR, NULL, parallel_mergesort, (void *) aR);
+	int createL = pthread_create(
+    	&tidL, NULL, parallel_mergesort, aL
+	);
 
-	/* wait for the two threads to finish */
-	pthread_join(tidL, NULL);
-	pthread_join(tidR, NULL);
+	int createR = pthread_create(
+    	&tidR, NULL, parallel_mergesort, aR
+	);
+
+	/* If thread creation fails, sort sequentially */
+	if (createL != 0) {
+    	fprintf(stderr, "Left thread error: %s\n",
+            strerror(createL));
+    	my_mergesort(left, mid);
+	}
+
+	if (createR != 0) {
+    	fprintf(stderr, "Right thread error: %s\n",
+            strerror(createR));
+    	my_mergesort(mid + 1, right);
+	}
+
+	/* Only join successfully created threads */
+	if (createL == 0) {
+    	int rc = pthread_join(tidL, NULL);
+    	if (rc != 0) {
+        	fprintf(stderr, "Left join error: %s\n",
+                strerror(rc));
+        	exit(EXIT_FAILURE);
+    	}
+	}
+
+	if (createR == 0) {
+		int rc = pthread_join(tidR, NULL);
+		if (rc != 0) {
+			fprintf(stderr, "Right join error: %s\n",
+					strerror(rc));
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	/* free the arguments */
 	free(aL);
@@ -95,6 +132,12 @@ struct argument * buildArgs(int left, int right, int level){
 	/* allocate memory */
 	struct argument *arg = (struct argument *) malloc (sizeof(struct argument));
 
+	if (arg == NULL) {
+    perror("buildArgs malloc");
+    exit(EXIT_FAILURE);
+	}
+
+
 	/* fill in the fields */
 	arg->left = left;
 	arg->right = right;
@@ -103,3 +146,4 @@ struct argument * buildArgs(int left, int right, int level){
 	/* return the argument */
 	return arg;
 }
+
